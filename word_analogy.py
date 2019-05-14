@@ -11,6 +11,8 @@ file_name = sys.argv[1]
 google_test_set = sys.argv[2]
 out_file_name = sys.argv[3]
 outfile_eval_file = sys.argv[4]
+should_normalize = sys.argv[5]
+similarity = sys.argv[6]
 #file_name = "smaller_model.txt"
 #out_file_name = "output_directory"
 #outfile_eval_file = "output_eval.txt"
@@ -25,7 +27,7 @@ with open(file_name, 'r', encoding="utf-8") as in_file:
 			the_key = the_line[0]
 			value = np.array(the_line[1:]) # getting values of the key
 
-def find_vector(the_file_path, should_normalize, similarity_type):
+def find_vector(should_normalize, similarity_type):
 	eval_path = os.path.join(outfile_eval_file,"output_eval.txt")
 	with open(eval_path, 'w', encoding="utf-8") as output_eval_file:
 		match_counter = 0
@@ -83,6 +85,7 @@ def find_vector(the_file_path, should_normalize, similarity_type):
 			output_eval_file.write(filename, "/n")
 			output_eval_file.write(accuracy_checker_correct, "%", " ", "(", str(match_counter), "/", str(sum), ")", "\n")
 
+find_vector(should_normalize, similarity)
 
 def euclidean_similarity(vec1, vec2):
 	return np.sqrt(np.sum((vec1-vec2)**2, axis=1)) #taking elements of vec 1 and cev element
