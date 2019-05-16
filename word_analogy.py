@@ -11,8 +11,8 @@ file_name = sys.argv[1]
 google_test_set = sys.argv[2]
 out_file_name = sys.argv[3]
 outfile_eval_file = sys.argv[4]
-should_normalize = sys.argv[5]
-similarity = sys.argv[6]
+should_normalize = int(sys.argv[5])
+similarity = int(sys.argv[6])
 #file_name = "smaller_model.txt"
 #out_file_name = "output_directory"
 #outfile_eval_file = "output_eval.txt"
@@ -21,15 +21,24 @@ similarity = sys.argv[6]
 
 words_dict = {}
 with open(file_name, 'r', encoding="utf-8") as in_file:
-	with open(out_file_name, 'w', encoding="utf-8") as out_file:
-		for line in in_file:
-			the_line = line.split(" ")
-			the_key = the_line[0]
-			value = np.array(the_line[1:]) # getting values of the key
+	for line in in_file:
+		the_line = line.split(" ")
+		the_key = the_line[0]
+		value = np.array(the_line[1:], dtype=float) # getting values of the key
+		words_dict[the_key] = value
+
+def euclidean_similarity(vec1, vec2):
+	return np.sqrt(np.sum((vec1-vec2)**2)) #taking elements of vec 1 and vec2
+
+def manhattan_similarity(vec1, vec2):
+	return np.sum(np.absolute(vec1-vec2))  # got the formula from numpy.org and docs.scipy.org
+
+def cosine_similarity(vec1, vec2):
+	return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2)) #got it from program creek
+
 
 def find_vector(should_normalize, similarity_type):
-	eval_path = os.path.join(outfile_eval_file,"output_eval.txt")
-	with open(eval_path, 'w', encoding="utf-8") as output_eval_file:
+	with open(outfile_eval_file, 'w', encoding="utf-8") as output_eval_file:
 		match_counter = 0
 		negative_match_counter = 0
 		for filename in os.listdir(google_test_set):
@@ -43,10 +52,19 @@ def find_vector(should_normalize, similarity_type):
 				with open(file_path, 'w', encoding="utf-8") as out_put_file:
 					for line in open_file.readlines():
 						a_line = line.split(" ")
+						if a_line[0] not in words_dict:
+							negative_match_counter +=1
+							continue
 						vec_a = words_dict[a_line[0]] # saving first word in line in word_vec_a list
+						if a_line[1] not in words_dict:
+							negative_match_counter +=1
+							continue
 						vec_b = words_dict[a_line[1]]
+						if a_line[2] not in words_dict:
+							negative_match_counter +=1
+							continue
 						vec_c = words_dict[a_line[2]]
-						vec_d = words_dict[a_line[3]]
+						#vec_d = words_dict[a_line[3]]
 						if should_normalize == 1:
 							vec_a= vec_a/np.linalg.norm(vec_a) # learned this from stuck over flow
 							vec_b = vec_b/np.linalg.norm(vec_b)
@@ -69,32 +87,23 @@ def find_vector(should_normalize, similarity_type):
 							if distance > temp_max and similarity_type == 2:
 								temp_max = distance
 								key_curr_candidate = key
-						out_put_file.write(a_line[0], " ")
-						out_put_file.write(a_line[1], " ")
-						out_put_file.write(a_line[2], " ")
-						out_put_file.write(key_curr_candidate, " ", "\n")
+						out_put_file.write(a_line[0] + " ")
+						out_put_file.write(a_line[1] + " ")
+						out_put_file.write(a_line[2] + " ")
+						out_put_file.write(key_curr_candidate+ " "+ "\n")
 
 						if key_curr_candidate == a_line[3]:
 							match_counter += 1
 						else:
-							negative_match_counter +=1
+							negative_match_counter += 1
 
 			sum = match_counter + negative_match_counter
 			accuracy_checker_correct = match_counter/sum
-			print("(", str(match_counter), "/", str(sum))
-			output_eval_file.write(filename, "/n")
-			output_eval_file.write(accuracy_checker_correct, "%", " ", "(", str(match_counter), "/", str(sum), ")", "\n")
+			#print("(", str(match_counter), "/", str(sum))
+			output_eval_file.write(filename + "/n")
+			output_eval_file.write(str(accuracy_checker_correct) + "%" + " " + "(" + str(match_counter) + "/" + str(sum) + ")" + "\n")
 
 find_vector(should_normalize, similarity)
-
-def euclidean_similarity(vec1, vec2):
-	return np.sqrt(np.sum((vec1-vec2)**2, axis=1)) #taking elements of vec 1 and cev element
-
-def manhattan_similarity(vec1, vec2):
-	return np.sum(np.absolute(vec1-vec2), axis=1)  # got the formula from numoy.org and docs.scipy.org
-def cosine_similarity(vec1, vec2):
-	return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2)) #got it from program creek
-
 
 
 
